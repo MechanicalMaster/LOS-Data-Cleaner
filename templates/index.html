@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOS Data Cleaner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .file-upload {
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-upload:hover {
+            border-color: #aaa;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-name {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .instructions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LOS Data Cleaner</h1>
+        
+        <form id="upload-form" action="/process" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file-input">Upload LOS Data File:</label>
+                <div class="file-upload" id="file-upload-area">
+                    <span>Click to select or drag & drop file here</span>
+                    <div class="file-name" id="file-name"></div>
+                </div>
+                <input type="file" id="file-input" name="file" accept=".txt,.json">
+                <div class="error" id="error-message"></div>
+            </div>
+            <button type="submit">Process Data</button>
+        </form>
+        
+        <div class="instructions">
+            <h3>How It Works</h3>
+            <p>This tool processes Loan Origination System (LOS) logs to create a clean status history report.</p>
+            <ol>
+                <li>Upload a text file containing LOS data (like the Dealer_887.txt example)</li>
+                <li>The system will extract and organize the data by status changes</li>
+                <li>You'll receive a clean JSON file with the status history, showing when each status started and ended</li>
+            </ol>
+            <p>The processed output will show:</p>
+            <ul>
+                <li><strong>Sr. No</strong> - Sequential number for each status change</li>
+                <li>Status name (e.g., "Lead Uploaded", "Application In Progress")</li>
+                <li>Status start time (Unix timestamp)</li>
+                <li><strong>Status start time in human-readable format</strong> (YYYY-MM-DD HH:MM:SS)</li>
+                <li>Status end time (Unix timestamp)</li>
+                <li><strong>Status end time in human-readable format</strong> (YYYY-MM-DD HH:MM:SS)</li>
+                <li>User ID who initiated that status change</li>
+                <li>Phase and task information</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileUploadArea = document.getElementById('file-upload-area');
+            const fileInput = document.getElementById('file-input');
+            const fileName = document.getElementById('file-name');
+            const errorMessage = document.getElementById('error-message');
+            const form = document.getElementById('upload-form');
+            
+            // Handle click on upload area
+            fileUploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Handle file selection
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    fileName.textContent = this.files[0].name;
+                    errorMessage.textContent = '';
+                } else {
+                    fileName.textContent = '';
+                }
+            });
+            
+            // Handle form submission
+            form.addEventListener('submit', function(e) {
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    e.preventDefault();
+                    errorMessage.textContent = 'Please select a file first';
+                }
+            });
+            
+            // Handle drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileUploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileUploadArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileUploadArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                fileUploadArea.style.borderColor = '#4CAF50';
+            }
+            
+            function unhighlight() {
+                fileUploadArea.style.borderColor = '#ddd';
+            }
+            
+            fileUploadArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files && files.length > 0) {
+                    fileInput.files = files;
+                    fileName.textContent = files[0].name;
+                    errorMessage.textContent = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
